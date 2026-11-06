@@ -60,6 +60,8 @@ footer a { color: var(--accent); font-weight: 600; user-select: all; }
 .grid { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 24px; align-items: start; }
 @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; display: grid; gap: 20px; min-width: 0; }
+.empty { background: var(--accent-soft); border-radius: var(--r); padding: 16px; display: grid; gap: 6px; }
+.empty p { margin: 0; max-width: 60ch; }
 .label { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
@@ -89,9 +91,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .dgrid input { width: 100%; font: 500 14px var(--font-num); text-align: right; padding: 6px 6px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); color: var(--ink); }
 .dgrid input:disabled { opacity: .45; }
 .dgrid .sub { display: block; font-size: 12px; color: var(--muted); }
-.seg3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
-.seg3 label { padding: 9px 10px; }
-@media (max-width: 400px) { .seg3 label small { display: none; } }
+.seg3 { grid-template-columns: minmax(0,1fr); }
+.seg3 label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 12px; }
+.seg3 label small { text-align: right; }
+.seg3 input + label ~ label { border-left: 0; border-top: 1px solid var(--line); }
+.seg3 input:checked + label { box-shadow: inset 3px 0 0 var(--accent); }
 .check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin-top: 10px; }
 .check input { accent-color: var(--accent); margin-top: 3px; }
 .ort-total { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
@@ -169,7 +173,7 @@ summary { cursor: pointer; font-weight: 600; }
       <fieldset>
         <p class="label">Waar werk je?</p>
         <div class="seg">
-          <input type="radio" name="cao" id="cao-zh" value="zh" checked>
+          <input type="radio" name="cao" id="cao-zh" value="zh">
           <label for="cao-zh">Algemeen ziekenhuis<small>Cao Ziekenhuizen · pensioenfonds PFZW</small></label>
           <input type="radio" name="cao" id="cao-umc" value="umc">
           <label for="cao-umc">Academisch ziekenhuis<small>Cao umc · pensioenfonds ABP</small></label>
@@ -179,8 +183,8 @@ summary { cursor: pointer; font-weight: 600; }
       <div>
         <p class="label"><label for="jaren">Ervaringsjaren (trede)</label></p>
         <div class="row">
-          <input type="range" id="jaren" min="0" max="10" step="1" value="2">
-          <span class="out" id="jaren-out">2</span>
+          <input type="range" id="jaren" min="0" max="10" step="1" value="0">
+          <span class="out" id="jaren-out">0</span>
         </div>
         <p class="hint" id="jaren-hint"></p>
       </div>
@@ -252,23 +256,27 @@ summary { cursor: pointer; font-weight: 600; }
     </form>
 
     <section class="panel result" aria-live="polite">
-      <div class="hero">
+      <div class="empty" id="empty">
+        <h2>Kies eerst waar je werkt</h2>
+        <p>Selecteer links <b>Algemeen ziekenhuis</b> of <b>Academisch ziekenhuis</b>. Daarna zie je hier je bruto jaarinkomen, de opbouw per onderdeel, je pensioenpremie en een vergelijking tussen beide.</p>
+      </div>
+      <div class="hero needs-cao" hidden>
         <p class="label" id="hero-label">Bruto per jaar</p>
-        <div class="big" id="hero">€ 0</div>
+        <div class="big" id="hero"></div>
         <div class="sub" id="hero-sub"></div>
       </div>
 
-      <div class="kpis">
+      <div class="kpis needs-cao" hidden>
         <div class="kpi"><b id="k-sal">–</b><span>Salaris per maand</span></div>
         <div class="kpi"><b id="k-ort">–</b><span>Gem. ORT per maand</span></div>
         <div class="kpi"><b id="k-pen">–</b><span>Eigen pensioenpremie per maand</span></div>
       </div>
 
-      <div class="tablewrap">
+      <div class="tablewrap needs-cao" hidden>
         <table class="slip" id="slip"></table>
       </div>
 
-      <section class="pension-note" aria-labelledby="pn-title">
+      <section class="pension-note needs-cao" aria-labelledby="pn-title" hidden>
         <h2 id="pn-title">Pensioenpremie verschilt per cao</h2>
         <p>Een algemeen ziekenhuis en een academisch ziekenhuis hebben elk hun eigen pensioenfonds. Daardoor verschillen de premie en de verdeling tussen jou en je werkgever.</p>
         <div class="pn-grid">
@@ -288,13 +296,13 @@ summary { cursor: pointer; font-weight: 600; }
         <p class="hint">Gevolg: in een algemeen ziekenhuis gaat er meer pensioenpremie van je brutoloon af, terwijl een umc-werkgever meer voor je inlegt.</p>
       </section>
 
-      <div class="compare">
+      <div class="compare needs-cao" hidden>
         <h2>Algemeen en academisch ziekenhuis naast elkaar</h2>
         <div class="tablewrap"><table class="cmp" id="cmp"></table></div>
         <p id="compare"></p>
       </div>
 
-      <div class="chart">
+      <div class="chart needs-cao" hidden>
         <div class="chart-head">
           <h2 id="chart-title">Jaarinkomen per ervaringsjaar</h2>
           <div class="modes" role="group" aria-label="Wat de grafiek toont">
@@ -495,7 +503,28 @@ function calc(caoKey, jaren, dt, hours) {
 }
 
 function render() {
-  const caoKey = document.querySelector("input[name=cao]:checked").value;
+  const sel = document.querySelector("input[name=cao]:checked");
+  const gekozen = !!sel;
+  $("empty").hidden = gekozen;
+  document.querySelectorAll(".needs-cao").forEach(el => { el.hidden = !gekozen; });
+  if (!gekozen) {
+    const jaren0 = parseInt($("jaren").value, 10), dt0 = parseInt($("dt").value, 10) / 100;
+    $("jaren-out").textContent = jaren0;
+    $("dt-out").textContent = Math.round(dt0 * 100) + "%";
+    $("jaren-hint").textContent = "Kies eerst waar je werkt; dan zie je de bijbehorende trede.";
+    $("dt-hint").textContent = "Kies eerst waar je werkt; de voltijdweek verschilt per cao (38 of 46 uur).";
+    const dtype0 = readDienst().type;
+    $("ort-detail").hidden = dtype0 !== "aanw";
+    $("dienst-detail").hidden = dtype0 !== "bereik";
+    ORT_CATS.forEach(k => { $("pct-" + k.key).textContent = "\u2013"; $("bpct-" + k.key).textContent = "\u2013"; });
+    $("ort-tot").textContent = ORT_CATS.reduce((t, k) => t + readHours()[k.key], 0) + " uur";
+    $("bw-tot").textContent = Object.values(readDienst().w).reduce((a, b) => a + b, 0) + " uur";
+    $("type-hint").textContent = "";
+    $("dienst-hint").textContent = "Kies eerst waar je werkt; de vergoedingen verschillen per cao.";
+    drawChart(jaren0, dt0, readHours());
+    return;
+  }
+  const caoKey = sel.value;
   const other = caoKey === "zh" ? "umc" : "zh";
   const jaren = parseInt($("jaren").value, 10);
   const dt = parseInt($("dt").value, 10) / 100;
