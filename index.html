@@ -63,6 +63,21 @@ footer a { color: var(--accent); font-weight: 600; user-select: all; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; display: grid; gap: 20px; min-width: 0; }
 .empty { background: var(--accent-soft); border-radius: var(--r); padding: 16px; display: grid; gap: 6px; }
 .empty p { margin: 0; max-width: 60ch; }
+.tip { display: inline-grid; place-items: center; width: 17px; height: 17px; margin-left: 4px; padding: 0; border-radius: 50%; border: 1px solid var(--accent); background: transparent; color: var(--accent); font: 700 11px/1 var(--font-body); cursor: help; vertical-align: 1px; text-transform: none; letter-spacing: 0; }
+.tip:hover, .tip[aria-expanded=true] { background: var(--accent); color: var(--surface); }
+.tipbox { position: fixed; z-index: 50; max-width: min(320px, calc(100vw - 32px)); background: var(--ink); color: var(--surface); font-size: 13px; line-height: 1.45; padding: 10px 12px; border-radius: var(--r); box-shadow: 0 6px 20px rgb(0 0 0 / .2); pointer-events: none; }
+.step { width: 30px; height: 30px; flex: none; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); font: 600 17px/1 var(--font-body); cursor: pointer; }
+.step:hover { border-color: var(--accent); color: var(--accent); }
+.mbar { display: none; }
+@media (max-width: 860px) {
+  .mbar:not([hidden]) { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--brand); color: var(--on-brand);
+    padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); box-shadow: 0 -4px 16px rgb(0 0 0 / .18); }
+  .mbar .mb-l { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--on-brand-muted); }
+  .mbar b { font-size: 16px; font-variant-numeric: tabular-nums; }
+  body { padding-bottom: 96px; }
+}
+.note { margin: 10px 0 0; font-size: 13px; line-height: 1.45; padding: 8px 10px; border-left: 3px solid var(--umc); background: var(--bg); border-radius: var(--r); }
+.note b { color: var(--ink); }
 .label { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
@@ -107,7 +122,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .hero .big { font: 700 clamp(38px, 6vw, 58px)/1 var(--font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .hero .sub { color: var(--muted); }
 .kpis { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
-@media (max-width: 520px) { .kpis { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 520px) { .kpis { gap: 8px; } .kpi b { font-size: 16px; } .kpi span { font-size: 12px; } }
 .kpi { border-top: 2px solid var(--ink); padding-top: 8px; }
 .kpi b { display: block; font: 500 20px var(--font-num); font-variant-numeric: tabular-nums; }
 .kpi span { font-size: 13px; color: var(--muted); }
@@ -129,6 +144,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .cmp td { text-align: right; font-family: var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cmp thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; text-align: right; }
 .cmp thead th.me { color: var(--accent); }
+.cmp .short { display: none; }
 .cmp tbody tr { border-top: 1px solid var(--line); }
 .cmp tr.strong th, .cmp tr.strong td { font-weight: 600; }
 .cmp td.pos { color: var(--accent); }
@@ -159,6 +175,19 @@ summary { cursor: pointer; font-weight: 600; }
 .adv label { font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
 .adv input { font: 500 14px var(--font-num); padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); width: 100%; }
 @media (prefers-reduced-motion: no-preference) { .hero .big { transition: color .2s; } }
+
+@media (max-width: 520px) {
+  .slip, .cmp { font-size: 13px; }
+  .slip td, .cmp td, .cmp th { padding-left: 6px; }
+  .slip td { padding-left: 8px; }
+  .cmp .meta { display: none; }
+  .panel { padding: 16px; }
+  .cmp th:first-child { min-width: 6.5em; }
+  .cmp td { font-size: 12.5px; }
+  .cmp .full { display: none; }
+  .cmp .short { display: inline; }
+  .cmp thead th, .slip thead th { font-size: 10px; letter-spacing: .03em; }
+}
 </style>
 <style>img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
@@ -178,30 +207,45 @@ summary { cursor: pointer; font-weight: 600; }
           <input type="radio" name="cao" id="cao-zh" value="zh">
           <label for="cao-zh">Algemeen ziekenhuis<small>Cao Ziekenhuizen · pensioenfonds PFZW</small></label>
           <input type="radio" name="cao" id="cao-umc" value="umc">
-          <label for="cao-umc">Academisch ziekenhuis<small>Cao umc · pensioenfonds ABP</small></label>
+          <label for="cao-umc">Academisch ziekenhuis<small>Cao UMC · pensioenfonds ABP</small></label>
         </div>
       </fieldset>
 
+      <fieldset>
+        <p class="label">Peildatum <button type="button" class="tip" data-tip="peildatum" aria-label="Uitleg">?</button></p>
+        <div class="seg">
+          <input type="radio" name="peil" id="peil-nu" value="nu" checked>
+          <label for="peil-nu">Nu<small>bijgewerkt tot november 2026</small></label>
+          <input type="radio" name="peil" id="peil-27" value="mei27">
+          <label for="peil-27">Vanaf 1 mei 2027<small>Cao UMC +3,5% · Cao Ziekenhuizen nog onbekend</small></label>
+        </div>
+        <p class="note" id="peil-hint" hidden></p>
+      </fieldset>
+
       <div>
-        <p class="label"><label for="jaren">Ervaringsjaren (trede)</label></p>
+        <p class="label"><label for="jaren">Ervaringsjaren (trede)</label> <button type="button" class="tip" data-tip="trede" aria-label="Uitleg">?</button></p>
         <div class="row">
+          <button type="button" class="step" data-step="-1" aria-label="Eén ervaringsjaar minder">−</button>
           <input type="range" id="jaren" min="0" max="10" step="1" value="0">
+          <button type="button" class="step" data-step="1" aria-label="Eén ervaringsjaar meer">+</button>
           <span class="out" id="jaren-out">0</span>
         </div>
         <p class="hint" id="jaren-hint"></p>
       </div>
 
       <div>
-        <p class="label"><label for="dt">Dienstverband</label></p>
+        <p class="label"><label for="dt">Dienstverband</label> <button type="button" class="tip" data-tip="dienstverband" aria-label="Uitleg">?</button></p>
         <div class="row">
+          <button type="button" class="step" data-target="dt" data-step="-5" aria-label="Dienstverband 5% lager">−</button>
           <input type="range" id="dt" min="50" max="100" step="5" value="100">
+          <button type="button" class="step" data-target="dt" data-step="5" aria-label="Dienstverband 5% hoger">+</button>
           <span class="out" id="dt-out">100%</span>
         </div>
         <p class="hint" id="dt-hint"></p>
       </div>
 
       <fieldset>
-        <p class="label">Diensten</p>
+        <p class="label">Diensten <button type="button" class="tip" data-tip="diensten" aria-label="Uitleg">?</button></p>
         <div class="seg seg3">
           <input type="radio" name="dtype" id="dt-geen" value="geen" checked>
           <label for="dt-geen">Geen dienst<small>alleen dagwerk</small></label>
@@ -213,7 +257,7 @@ summary { cursor: pointer; font-weight: 600; }
         <p class="hint" id="type-hint"></p>
 
         <div id="ort-detail" hidden style="margin-top:12px">
-          <p class="label">Uren aanwezigheidsdienst per maand</p>
+          <p class="label">Uren aanwezigheidsdienst per maand <button type="button" class="tip" data-tip="ort" aria-label="Uitleg">?</button></p>
           <div class="presets" role="group" aria-label="Voorbeeldpatronen">
             <button type="button" data-preset="geen">Geen</button>
             <button type="button" data-preset="licht">Licht</button>
@@ -225,7 +269,7 @@ summary { cursor: pointer; font-weight: 600; }
         </div>
 
         <div id="dienst-detail" hidden style="margin-top:12px">
-          <p class="label">Uren bereikbaarheidsdienst per maand</p>
+          <p class="label">Uren bereikbaarheidsdienst per maand <button type="button" class="tip" data-tip="bereik" aria-label="Uitleg">?</button></p>
           <div class="presets" role="group" aria-label="Voorbeeldpatronen bereikbaarheidsdienst">
             <button type="button" data-bpreset="geen">Geen</button>
             <button type="button" data-bpreset="licht">Licht</button>
@@ -239,7 +283,7 @@ summary { cursor: pointer; font-weight: 600; }
             <input type="number" id="d-za" min="0" max="400" step="1" value="0" aria-label="Uren bereikbaarheidsdienst zaterdag per maand">
             <input type="number" id="d-zo" min="0" max="400" step="1" value="0" aria-label="Uren bereikbaarheidsdienst zon- en feestdagen per maand">
           </div>
-          <p class="label" style="margin-top:16px">Waarvan gewerkt, per tijdvak</p>
+          <p class="label" style="margin-top:16px">Waarvan gewerkt, per tijdvak <button type="button" class="tip" data-tip="gewerkt" aria-label="Uitleg">?</button></p>
           <div class="ort" id="bw"></div>
           <label class="check" for="zh-werk" id="zh-werk-row"><input type="checkbox" id="zh-werk"> <span>Algemeen ziekenhuis: mijn ziekenhuis betaalt ook binnen de 48-urige werkweek een toeslag over gewerkte uren tijdens diensten</span></label>
           <label class="check" for="dw-geld" id="dw-geld-row"><input type="checkbox" id="dw-geld"> <span>Gewerkte uren laten uitbetalen in plaats van compenseren in vrije tijd</span></label>
@@ -247,15 +291,6 @@ summary { cursor: pointer; font-weight: 600; }
         </div>
       </fieldset>
 
-      <details>
-        <summary>Pensioenpercentages aanpassen</summary>
-        <div class="adv" style="margin-top:12px">
-          <label for="p-zh-wn">Pensioenfonds PFZW, eigen deel (%)<input id="p-zh-wn" type="number" step="0.01" value="12.95"></label>
-          <label for="p-zh-fr">Pensioenfonds PFZW, franchise (€)<input id="p-zh-fr" type="number" step="1" value="17283"></label>
-          <label for="p-abp-wn">Pensioenfonds ABP, OP/NP eigen deel (%)<input id="p-abp-wn" type="number" step="0.01" value="8.13"></label>
-          <label for="p-abp-fr">Pensioenfonds ABP, franchise (€)<input id="p-abp-fr" type="number" step="1" value="19200"></label>
-        </div>
-      </details>
     </form>
 
     <section class="panel result" aria-live="polite">
@@ -290,7 +325,7 @@ summary { cursor: pointer; font-weight: 600; }
             <p>Premie 25,9% over je inkomen boven € 17.283. Jij betaalt 12,95%, je werkgever 12,95%.</p>
           </div>
           <div class="pn">
-            <p class="label">Cao umc · pensioenfonds ABP</p>
+            <p class="label">Cao UMC · pensioenfonds ABP</p>
             <div class="pn-ratio"><b>30 / 70</b><span>jij / werkgever</span></div>
             <div class="pn-bar" aria-hidden="true"><i style="width:30%"></i></div>
             <p>Premie 27,1% over je inkomen boven € 19.200, plus 0,8% arbeidsongeschiktheidspensioen. Jij betaalt 8,13% (+ 0,24%), je werkgever 18,97% (+ 0,56%).</p>
@@ -330,29 +365,46 @@ summary { cursor: pointer; font-weight: 600; }
         <summary>Hoe wordt dit berekend?</summary>
         <div class="notes" style="margin-top:10px">
           <p><b>Algemeen ziekenhuis (Cao Ziekenhuizen 2025-2027).</b> Salaristabel aios per 1 augustus 2026, IP 32 tot 47. De tabel is gebaseerd op 36 uur; aios werken 38 uur, dus het salaris is tabelbedrag × 38/36. De normatieve werkweek mag oplopen tot gemiddeld 48 uur (38 + 10) voor opleidingsactiviteiten die in het werk zijn verweven; die uren worden niet apart betaald, pas uren boven gemiddeld 48 per week gelden als overwerk (art. 6.18 en 8.7). ORT wordt berekend over het uurloon (1/156 van het 36-uurssalaris), met een maximum op het uurloon van IP 36. Vakantiebijslag en eindejaarsuitkering zijn elk 8,33% van het salaris. Pensioen bij pensioenfonds PFZW (Pensioenfonds Zorg en Welzijn): premie 25,9% over (pensioengevend inkomen − franchise), volgens de cao voor 50% voor rekening van de werknemer.</p>
-          <p><b>Academisch ziekenhuis (Cao umc 2026-2027).</b> Schaal 11a per 1 juli 2026, salarisnummer 0 tot 10, voor een volledige arbeidsduur van 2392 uur per jaar (46 uur per week). ORT is 47% (doordeweeks 20.00–07.00 en zaterdag) of 72% (zon- en feestdagen) over het uurloon (1/199 van het maandsalaris), met als maximum het uurloon van schaal 10, nummer 12. Vakantie-uitkering is 8% van het loon inclusief ORT en dienstvergoedingen; eindejaarsuitkering 8,3% van het salaris. Pensioen bij pensioenfonds ABP (Algemeen Burgerlijk Pensioenfonds): OP/NP 27,1% (eigen deel 8,13%) boven € 19.200 en AOP 0,8% (eigen deel 0,24%) boven € 29.700.</p>
+          <p><b>Academisch ziekenhuis (Cao UMC 2026-2027).</b> Schaal 11a per 1 juli 2026, salarisnummer 0 tot 10, voor een volledige arbeidsduur van 2392 uur per jaar (46 uur per week). ORT is 47% (doordeweeks 20.00–07.00 en zaterdag) of 72% (zon- en feestdagen) over het uurloon (1/199 van het maandsalaris), met als maximum het uurloon van schaal 10, nummer 12. Vakantie-uitkering is 8% van het loon inclusief ORT en dienstvergoedingen; eindejaarsuitkering 8,3% van het salaris. Pensioen bij pensioenfonds ABP (Algemeen Burgerlijk Pensioenfonds): OP/NP 27,1% (eigen deel 8,13%) boven € 19.200 en AOP 0,8% (eigen deel 0,24%) boven € 29.700.</p>
           <p><b>Pensioengevend inkomen</b> = 12 × salaris + vakantiegeld + eindejaarsuitkering + ORT, gemaximeerd op € 137.800. Bij deeltijd gaan franchise en maximum naar rato. Je eigen premie gaat van je brutoloon af vóór de loonheffing.</p>
-          <p><b>Diensten.</b> Een aanwezigheidsdienst rekenen we als werktijd met ORT. Een bereikbaarheidsdienst geeft een vaste vergoeding plus een toeslag over de gewerkte uren (art. 10.5 en 10.8 Cao Ziekenhuizen; art. 4.7.4.1 en 4.7.4.2 cao umc). Vergoedingen voor bereikbaarheid en gewerkte uren tellen we niet mee voor pensioen. In het academisch ziekenhuis tellen ze wel mee voor de vakantie-uitkering (8% van het loon); in het algemeen ziekenhuis niet (vakantiebijslag over het salaris).</p>
-          <p><b>Niet meegenomen:</b> overwerk, reiskosten, de umc-verhoging van 3,5% per 1 mei 2027 en een nieuwe cao Ziekenhuizen na januari 2027. Je werkelijke inschaling (meetellende ervaring) bepaalt je werkgever.</p>
+          <p><b>Diensten.</b> Een aanwezigheidsdienst rekenen we als werktijd met ORT. Een bereikbaarheidsdienst geeft een vaste vergoeding plus een toeslag over de gewerkte uren (art. 10.5 en 10.8 Cao Ziekenhuizen; art. 4.7.4.1 en 4.7.4.2 Cao UMC). Vergoedingen voor bereikbaarheid en gewerkte uren tellen we niet mee voor pensioen. In het academisch ziekenhuis tellen ze wel mee voor de vakantie-uitkering (8% van het loon); in het algemeen ziekenhuis niet (vakantiebijslag over het salaris).</p>
+          <p><b>Niet meegenomen:</b> overwerk, reiskosten, de umc-verhoging van 3,5% per 1 mei 2027 en een nieuwe Cao Ziekenhuizen na januari 2027. Je werkelijke inschaling (meetellende ervaring) bepaalt je werkgever.</p>
           <ul>
             <li><a href="https://cao-ziekenhuizen.nl/sites/default/files/2025-04/Salarisschalen%20AIOS%202025-2027.pdf" target="_blank" rel="noopener">Salarisschalen aios Cao Ziekenhuizen 2025-2027</a></li>
             <li><a href="https://www.lad.nl/wp-content/uploads/Cao-Ziekenhuizen-2025-2027.pdf" target="_blank" rel="noopener">Cao Ziekenhuizen 2025-2027 (artikelen 6.18, 7.3.1, 7.4, 7.5, 9.4)</a></li>
-            <li><a href="https://www.umcmedewerkers.nl/app/uploads/sites/2/2026/05/Salarisschalen-cao-umcs-2026-2027.pdf" target="_blank" rel="noopener">Salarisschalen cao umc's 2026-2027 (bijlage B, schaal 11a)</a></li>
-            <li><a href="https://www.umcmedewerkers.nl/kennisbank/cao-umcs-2026-2027/" target="_blank" rel="noopener">Cao umc's 2026-2027 (artikelen 1.1, 4.4, 4.5, 4.7.3)</a></li>
+            <li><a href="https://www.umcmedewerkers.nl/app/uploads/sites/2/2026/05/Salarisschalen-cao-umcs-2026-2027.pdf" target="_blank" rel="noopener">Salarisschalen Cao UMC's 2026-2027 (bijlage B, schaal 11a)</a></li>
+            <li><a href="https://www.umcmedewerkers.nl/kennisbank/cao-umcs-2026-2027/" target="_blank" rel="noopener">Cao UMC's 2026-2027 (artikelen 1.1, 4.4, 4.5, 4.7.3)</a></li>
             <li><a href="https://www.abp.nl/content/dam/abp/documenten/formulieren-tabellen/premietabel-2026.pdf" target="_blank" rel="noopener">Pensioenfonds ABP: premietabel 2026</a></li>
             <li><a href="https://www.pfzw.nl/werkgevers/premie-en-factuur/premiepercentages-en-franchises.html" target="_blank" rel="noopener">Pensioenfonds PFZW: premies en franchises 2026</a></li>
           </ul>
           <p>Indicatief; aan deze berekening kun je geen rechten ontlenen.</p>
         </div>
       </details>
+
+      <details>
+        <summary>Pensioenpercentages aanpassen</summary>
+        <div class="adv" style="margin-top:12px">
+          <label for="p-zh-wn">Pensioenfonds PFZW, eigen deel (%)<input id="p-zh-wn" type="number" step="0.01" value="12.95"></label>
+          <label for="p-zh-fr">Pensioenfonds PFZW, franchise (€)<input id="p-zh-fr" type="number" step="1" value="17283"></label>
+          <label for="p-abp-wn">Pensioenfonds ABP, OP/NP eigen deel (%)<input id="p-abp-wn" type="number" step="0.01" value="8.13"></label>
+          <label for="p-abp-fr">Pensioenfonds ABP, franchise (€)<input id="p-abp-fr" type="number" step="1" value="19200"></label>
+        </div>
+      </details>
     </section>
   </div>
 
   <footer>
-    <p><b>Disclaimer.</b> Alle berekeningen zijn indicatief en kunnen fouten bevatten; er kunnen geen rechten aan worden ontleend. De uitkomsten kunnen veranderen wanneer er nieuwe salaristabellen of cao-afspraken komen. Alle gegevens zijn bijgewerkt tot november 2026.</p>
+    <p><b>Disclaimer:</b> Alle berekeningen zijn indicatief en kunnen fouten bevatten; er kunnen geen rechten aan worden ontleend. De uitkomsten kunnen veranderen wanneer er nieuwe salaristabellen of cao-afspraken komen. Alle gegevens zijn bijgewerkt tot november 2026.</p>
     <p>Deze web-app is ontwikkeld door Dr. R.A. Kingma. Bij vragen of opmerkingen kun je mailen naar <a href="mailto:r.a.kingma@umcg.nl">r.a.kingma@umcg.nl</a>.</p>
   </footer>
 </div>
+
+<div class="mbar" id="mbar" hidden aria-live="polite">
+  <div><span class="mb-l">Bruto per maand</span><b id="mb-maand">–</b></div>
+  <div><span class="mb-l">Per jaar</span><b id="mb-jaar">–</b></div>
+  <div><span class="mb-l">Eigen premie</span><b id="mb-pen">–</b></div>
+</div>
+<div class="tipbox" id="tipbox" role="tooltip" hidden></div>
 
 <script>
 const PRESETS = {
@@ -380,21 +432,23 @@ const CAO = {
     ip:    [32, 34, 36, 38, 40, 42, 44, 46, 47],
     uren: 38,
     maand: s => s * 38 / 36,
-    uurORT: s => Math.min(s, 5007) / 156,
+    uurORT: (s, cap) => Math.min(s, 5007) / 156,
     ort: { avond: .22, nacht: .47, zadag: .38, zanacht: .52, zon: .60 },
     vg: .0833, eju: .0833, vgOverOrt: false,
     fonds: "PFZW"
   },
   umc: {
-    naam: "Cao umc", kort: "academisch ziekenhuis", peil: "1 jul 2026",
+    naam: "Cao UMC", kort: "academisch ziekenhuis", peil: "1 jul 2026",
     // bijlage B schaal 11a per 1-7-2026, volledige arbeidsduur (46 uur)
     tabel: [4642, 4817, 4987, 5172, 5341, 5507, 5677, 5867, 6052, 6224, 6393],
+    tabel27: [4804, 4986, 5162, 5353, 5528, 5700, 5876, 6072, 6264, 6442, 6617],  // per 1-5-2027
+    cap: 5867, cap27: 6072,  // schaal 10 nr 12, maximum voor ORT en toeslag
     tabelUrl: "https://www.umcmedewerkers.nl/app/uploads/sites/2/2026/05/Salarisschalen-cao-umcs-2026-2027.pdf",
     ervaringUrl: "https://www.umcmedewerkers.nl/kennisbank/cao-umcs-2026-2027/",
-    ervaringArt: "artikel 13.2.1 van de cao umc",
+    ervaringArt: "artikel 13.2.1 van de Cao UMC",
     uren: 46,
     maand: s => s,
-    uurORT: s => Math.min(s / 199, 5867 / 156),
+    uurORT: (s, cap) => Math.min(s / 199, cap / 156),
     ort: { avond: .47, nacht: .47, zadag: .47, zanacht: .47, zon: .72 },
     vg: .08, eju: .083, vgOverOrt: true,
     fonds: "ABP"
@@ -445,10 +499,10 @@ function readHours() {
 const DIENST = {
   zh:  { per: 12, b: { mv: 87.5, za: 137.5, zo: 137.5 },
          w: { avond: .25, nacht: .50, zadag: .75, zanacht: .75, zon: 1.00 },
-         uur: s => s / 156 },
+         uur: (s, cap) => s / 156 },
   umc: { per: 1,  b: { mv: 5, za: 10, zo: 10 },
          w: { avond: .47, nacht: .47, zadag: .47, zanacht: .47, zon: .72 },
-         uur: s => Math.min(s / 199, 5867 / 156) }
+         uur: (s, cap) => Math.min(s / 199, cap / 156) }
 };
 function readDienst() {
   const v = id => Math.max(0, parseFloat($(id).value) || 0);
@@ -459,13 +513,17 @@ function readDienst() {
   ORT_CATS.forEach(c => { d.w[c.key] = on ? v("bw-" + c.key) : 0; });
   return d;
 }
+function peil() { const el = document.querySelector("input[name=peil]:checked"); return el ? el.value : "nu"; }
 function calc(caoKey, jaren, dt, hours) {
   const c = CAO[caoKey];
-  const idx = Math.min(jaren, c.tabel.length - 1);
-  const tabelBedrag = c.tabel[idx];
+  const mei27 = peil() === "mei27";
+  const tabel = (mei27 && c.tabel27) ? c.tabel27 : c.tabel;
+  const cap = (mei27 && c.cap27) ? c.cap27 : c.cap;
+  const idx = Math.min(jaren, tabel.length - 1);
+  const tabelBedrag = tabel[idx];
   const salVolt = c.maand(tabelBedrag);           // voltijd maandsalaris
   const sal = salVolt * dt;                        // eigen maandsalaris
-  const uur = c.uurORT(tabelBedrag);
+  const uur = c.uurORT(tabelBedrag, cap);
   let ortMaand = 0;
   ORT_CATS.forEach(k => { ortMaand += hours[k.key] * c.ort[k.key] * uur; });
   const salJaar = sal * 12, ortJaar = ortMaand * 12;
@@ -475,7 +533,7 @@ function calc(caoKey, jaren, dt, hours) {
   const D = DIENST[caoKey], d = readDienst();
   let bereik = 0, aanw = 0, werk = 0;
   ["mv", "za", "zo"].forEach(k => { bereik += d.u[k] / D.per * D.b[k]; });
-  const uurD = D.uur(tabelBedrag);
+  const uurD = D.uur(tabelBedrag, cap);
   // algemeen ziekenhuis: voor aios tellen gewerkte uren mee voor de normatieve werkweek (art. 6.18 lid 3);
   // een vergoeding geldt pas boven gemiddeld 48 uur (art. 8.7, 10.8 lid 5), tenzij het ziekenhuis ruimer vergoedt
   const werkTelt = caoKey === "umc" || d.zhWerk;
@@ -515,6 +573,9 @@ function render() {
   $("empty").hidden = gekozen;
   document.querySelectorAll(".needs-cao").forEach(el => { el.hidden = !gekozen; });
   if (!gekozen) {
+    $("mbar").hidden = true;
+    $("peil-hint").hidden = peil() !== "mei27";
+    $("peil-hint").innerHTML = peil() === "mei27" ? "<b>Let op:</b> voor de Cao Ziekenhuizen wordt nog onderhandeld over een nieuwe cao vanaf 1 februari 2027 (eerste overleg 28 oktober 2026). Tot er een akkoord is, blijft de tabel van 1 augustus 2026 gelden; daarmee rekent de app. Een eventuele loonsverhoging zit er dus nog niet in." : "";
     const jaren0 = parseInt($("jaren").value, 10), dt0 = parseInt($("dt").value, 10) / 100;
     $("jaren-out").textContent = jaren0;
     $("dt-out").textContent = Math.round(dt0 * 100) + "%";
@@ -532,6 +593,8 @@ function render() {
     return;
   }
   const caoKey = sel.value;
+  $("peil-hint").hidden = peil() !== "mei27";
+  $("peil-hint").innerHTML = peil() === "mei27" ? (caoKey === "umc" ? "<b>Let op:</b> de umc-tabel per 1 mei 2027 (+3,5%) staat vast. De pensioenpremies en franchises voor 2027 zijn nog niet bekend; de app rekent met die van 2026. Voor de Cao Ziekenhuizen in de vergelijking wordt nog gewacht op een nieuwe cao." : "<b>Let op:</b> voor de Cao Ziekenhuizen wordt nog onderhandeld over een nieuwe cao vanaf 1 februari 2027 (eerste overleg 28 oktober 2026). Tot er een akkoord is, blijft de tabel van 1 augustus 2026 gelden; daarmee rekent de app. Een eventuele loonsverhoging zit er dus nog niet in.") : "";
   const other = caoKey === "zh" ? "umc" : "zh";
   const jaren = parseInt($("jaren").value, 10);
   const dt = parseInt($("dt").value, 10) / 100;
@@ -542,14 +605,14 @@ function render() {
 
   $("jaren-out").textContent = jaren;
   $("dt-out").textContent = Math.round(dt * 100) + "%";
-  $("dt-hint").innerHTML = `${Math.round(c.uren * dt * 10) / 10} uur per week betaald (voltijd is ${c.uren} uur bij aios in de ${c.naam.toLowerCase()}).`
+  $("dt-hint").innerHTML = `${Math.round(c.uren * dt * 10) / 10} uur per week betaald (voltijd is ${c.uren} uur bij aios in de ${c.naam}).`
     + (caoKey === "zh"
       ? ` Let op: je normatieve werkweek mag oplopen tot gemiddeld 48 uur (38 + 10) vanwege opleidingsactiviteiten in je werk. Die 10 uur worden niet apart betaald; pas boven 48 uur geldt de overwerkvergoeding (<a href="https://www.lad.nl/wp-content/uploads/Cao-Ziekenhuizen-2025-2027.pdf#page=48" target="_blank" rel="noopener">art. 6.18</a> en <a href="https://www.lad.nl/wp-content/uploads/Cao-Ziekenhuizen-2025-2027.pdf#page=62" target="_blank" rel="noopener">art. 8.7</a>).`
       : ` In het academisch ziekenhuis zijn alle 46 uur betaalde werktijd.`);
   const trede = caoKey === "zh" ? `IP ${c.ip[r.idx]}` : `salarisnummer ${r.idx}`;
   $("jaren-hint").innerHTML = (r.capped
     ? `${c.naam}: maximum bereikt bij ${c.tabel.length - 1} jaar (trede ${trede}).`
-    : `${c.naam}: trede ${trede}, tabel per ${c.peil}.`)
+    : `${c.naam}: trede ${trede}, tabel per ${peil() === "mei27" && caoKey === "umc" ? "1 mei 2027" : c.peil}.`)
     + ` <a href="${c.tabelUrl}" target="_blank" rel="noopener">Bekijk de salaristabel</a>`
     + `<br>Welke ervaring meetelt (onder meer werk als anios of arts-onderzoeker, per volle 12 maanden) staat in <a href="${c.ervaringUrl}" target="_blank" rel="noopener">${c.ervaringArt}</a>.`;
   ORT_CATS.forEach(k => { $("pct-" + k.key).textContent = Math.round(c.ort[k.key] * 100) + "%"; });
@@ -577,6 +640,10 @@ function render() {
   $("k-sal").textContent = eur(r.sal);
   $("k-ort").textContent = eur(r.ortMaand + r.bereik + r.aanw + r.werk);
   $("k-pen").textContent = eur(r.wn / 12);
+  $("mb-maand").textContent = eur(r.bruto / 12);
+  $("mb-jaar").textContent = eur(r.bruto);
+  $("mb-pen").textContent = eur(r.wn / 12);
+  updateBar();
 
   const salMeta = caoKey === "zh"
     ? `${trede}: ${eur(r.tabelBedrag)} × 38/36${dt < 1 ? " × " + pct(dt) : ""}`
@@ -586,16 +653,16 @@ function render() {
     <thead><tr><th>Onderdeel</th><th>Per maand</th><th>Per jaar</th></tr></thead>
     <tbody>
     <tr><th>Salaris<span class="meta">${salMeta}</span></th><td>${eur(r.sal)}</td><td>${eur(r.salJaar)}</td></tr>
-    ${dt_ === "aanw" ? `<tr><th>ORT over aanwezigheidsdiensten<span class="meta">${totUren} uur/mnd, uurloon ORT ${eur(r.uur, 2)}${caoKey === "zh" && r.tabelBedrag > 5007 ? " (maximum IP 36)" : ""}</span></th><td>${eur(r.ortMaand)}</td><td>${eur(r.ortJaar)}</td></tr>` : ""}
+    ${dt_ === "aanw" ? `<tr><th>ORT over aanwezigheidsdiensten <button type="button" class="tip" data-tip="ort" aria-label="Uitleg">?</button><span class="meta">${totUren} uur/mnd, uurloon ORT ${eur(r.uur, 2)}${caoKey === "zh" && r.tabelBedrag > 5007 ? " (maximum IP 36)" : ""}</span></th><td>${eur(r.ortMaand)}</td><td>${eur(r.ortJaar)}</td></tr>` : ""}
     ${dt_ === "bereik" ? `<tr><th>Bereikbaarheidsdiensten<span class="meta">${caoKey === "zh" ? "€ 87,50 (ma–vr) of € 137,50 (weekend) per 12 uur" : "€ 5 (ma–vr) of € 10 (weekend) per uur"}</span></th><td>${eur(r.bereik)}</td><td>${eur(r.bereik * 12)}</td></tr>` : ""}
     ${dt_ === "bereik" ? `<tr><th>Toeslag gewerkte uren tijdens dienst<span class="meta">${caoKey === "zh" && !readDienst().zhWerk ? "telt mee voor je werkweek van 38 + 10 uur; geen toeslag binnen 48 uur" : `${Object.values(readDienst().w).reduce((a, b) => a + b, 0)} uur/mnd, uurloon ${eur(r.uurD, 2)}${readDienst().geld ? ", inclusief uitbetaling van de uren" : "; uren zelf terug in vrije tijd"}`}</span></th><td>${eur(r.werk)}</td><td>${eur(r.werk * 12)}</td></tr>` : ""}
-    <tr><th>Vakantiegeld<span class="meta">${pct(c.vg)} van salaris${c.vgOverOrt ? " + ORT en dienstvergoedingen" : ""}, in mei</span></th><td>–</td><td>${eur(r.vg)}</td></tr>
-    <tr><th>Eindejaarsuitkering<span class="meta">${pct(c.eju)} van salaris, in ${caoKey === "zh" ? "december" : "november"}</span></th><td>–</td><td>${eur(r.eju)}</td></tr>
+    <tr><th>Vakantiegeld <button type="button" class="tip" data-tip="vakantiegeld" aria-label="Uitleg">?</button><span class="meta">${pct(c.vg)} van salaris${c.vgOverOrt ? " + ORT en dienstvergoedingen" : ""}, in mei</span></th><td>–</td><td>${eur(r.vg)}</td></tr>
+    <tr><th>Eindejaarsuitkering <button type="button" class="tip" data-tip="eju" aria-label="Uitleg">?</button><span class="meta">${pct(c.eju)} van salaris, in ${caoKey === "zh" ? "december" : "november"}</span></th><td>–</td><td>${eur(r.eju)}</td></tr>
     <tr class="total"><th>Bruto jaarinkomen</th><td>${eur(r.bruto / 12)}</td><td>${eur(r.bruto)}</td></tr>
-    <tr><th style="padding-top:18px"><b>Pensioen bij pensioenfonds ${c.fonds}</b><span class="meta">${r.detail}</span></th><td></td><td></td></tr>
-    <tr class="neg"><th>Pensioengevend inkomen − franchise<span class="meta">${eur(r.pg)} − ${eur(r.franchise)}</span></th><td></td><td>${eur(r.grondslag)}</td></tr>
+    <tr><th style="padding-top:18px"><b>Pensioen bij pensioenfonds ${c.fonds}</b> ${c.fonds === "ABP" ? '<button type="button" class="tip" data-tip="aop" aria-label="Uitleg">?</button>' : ""}<span class="meta">${r.detail}</span></th><td></td><td></td></tr>
+    <tr class="neg"><th>Pensioengevend inkomen − franchise <button type="button" class="tip" data-tip="franchise" aria-label="Uitleg">?</button><span class="meta">${eur(r.pg)} − ${eur(r.franchise)}</span></th><td></td><td>${eur(r.grondslag)}</td></tr>
     <tr><th>Eigen premie (gaat van je brutoloon af)</th><td>${eur(r.wn / 12)}</td><td>${eur(r.wn)}</td></tr>
-    <tr><th>Werkgeversdeel</th><td>${eur(r.wg / 12)}</td><td>${eur(r.wg)}</td></tr>
+    <tr><th>Werkgeversdeel <button type="button" class="tip" data-tip="werkgever" aria-label="Uitleg">?</button></th><td>${eur(r.wg / 12)}</td><td>${eur(r.wg)}</td></tr>
     <tr class="total"><th>Totale pensioeninleg</th><td>${eur((r.wn + r.wg) / 12)}</td><td>${eur(r.wn + r.wg)}</td></tr>
     </tbody>`;
 
@@ -604,17 +671,17 @@ function render() {
   const rows = [
     ["Bruto jaarinkomen", "salaris, ORT, diensten, vakantiegeld, eindejaarsuitkering", x => x.bruto],
     ["Eigen pensioenpremie", "gaat van je bruto af", x => -x.wn],
-    ["Bruto na eigen premie", "wat overblijft voor de loonheffing", x => x.bruto - x.wn, true],
+    ["Bruto na eigen premie", "wat overblijft voor de loonheffing", x => x.bruto - x.wn, true, 0, "napremie"],
     ["Werkgeversdeel pensioen", "betaalt je werkgever bovenop je loon", x => x.wg],
-    ["Totale beloning", "bruto + werkgeversdeel pensioen", x => x.bruto + x.wg, true],
-    ["Totale beloning per contractuur", null, x => (x.bruto + x.wg) / uren(x), false, 2]
+    ["Totale beloning", "bruto + werkgeversdeel pensioen", x => x.bruto + x.wg, true, 0, "totaal"],
+    ["Totale beloning per contractuur", null, x => (x.bruto + x.wg) / uren(x), false, 2, "peruur"]
   ];
   const sign = (v, d) => (v > 0 ? "+ " : v < 0 ? "− " : "") + eur(Math.abs(v), d);
-  $("cmp").innerHTML = `<thead><tr><th></th><th class="${caoKey === "zh" ? "me" : ""}">Algemeen</th><th class="${caoKey === "umc" ? "me" : ""}">Academisch</th><th>Verschil</th></tr></thead><tbody>` +
-    rows.map(([t, m, f, strong, d = 0]) => {
+  $("cmp").innerHTML = `<thead><tr><th></th><th class="${caoKey === "zh" ? "me" : ""}"><span class="full">Algemeen</span><span class="short">Alg.</span></th><th class="${caoKey === "umc" ? "me" : ""}"><span class="full">Academisch</span><span class="short">Acad.</span></th><th><span class="full">Verschil</span><span class="short">Verschil</span></th></tr></thead><tbody>` +
+    rows.map(([t, m, f, strong, d = 0, tip]) => {
       const a = f(P), b = f(A), diff = b - a;
       const meta = m ?? `${P.c.uren} vs ${A.c.uren} uur per week`;
-      return `<tr class="${strong ? "strong" : ""}"><th>${t}<span class="meta">${meta}</span></th><td>${eur(a, d)}</td><td>${eur(b, d)}</td><td class="${Math.abs(diff) < 0.005 ? "" : "pos"}">${sign(diff, d)}</td></tr>`;
+      return `<tr class="${strong ? "strong" : ""}"><th>${t}${tip ? ` <button type="button" class="tip" data-tip="${tip}" aria-label="Uitleg">?</button>` : ""}<span class="meta">${meta}</span></th><td>${eur(a, d)}</td><td>${eur(b, d)}</td><td class="${Math.abs(diff) < 0.005 ? "" : "pos"}">${sign(diff, d)}</td></tr>`;
     }).join("") + `</tbody>`;
   const voor = v => v >= 0 ? "het academisch ziekenhuis" : "het algemeen ziekenhuis";
   const dBruto = A.bruto - P.bruto;
@@ -638,7 +705,9 @@ const MODES = {
 let chartUnit = "jaar";
 let chartState = null;
 function drawChart(jaren, dt, hours) {
-  const W = 640, H = 260, padL = 58, padR = 16, padT = 16, padB = 40;
+  const cw = $("chart").clientWidth || 640;
+  const W = Math.round(Math.max(280, Math.min(640, cw))), H = W < 500 ? 270 : 260, padL = W < 500 ? 54 : 58, padR = 12, padT = 16, padB = 40;
+  const fs = W < 500 ? 13 : 12, narrow = W < 500;
   const m = MODES[chartMode];
   const div = chartUnit === "maand" ? 12 : 1;
   const per = chartUnit === "maand" ? "maandinkomen (jaartotaal / 12)" : "jaarinkomen";
@@ -661,23 +730,23 @@ function drawChart(jaren, dt, hours) {
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${m.titel}, algemeen en academisch ziekenhuis">`;
   for (let v = bottom; v <= top + 1e-6; v += step) {
     s += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/>`;
-    s += `<text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="var(--muted)">${fmtTick(v)}</text>`;
+    s += `<text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" font-size="${fs}" fill="var(--muted)">${fmtTick(v)}</text>`;
   }
   s += `<line id="cx-line" x1="0" x2="0" y1="${padT}" y2="${H - padB}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`;
   const path = arr => arr.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
   s += `<path d="${path(umc)}" fill="none" stroke="var(--umc)" stroke-width="2.5" stroke-linejoin="round"/>`;
   const zhMax = CAO.zh.tabel.length - 1;
   s += `<line x1="${x(zhMax)}" x2="${x(zhMax)}" y1="${padT}" y2="${H - padB}" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>`;
-  s += `<text x="${x(zhMax) - 6}" y="${padT + 12}" text-anchor="end" font-size="12" fill="var(--accent)" font-weight="600">Einde schaal algemeen ziekenhuis</text>`;
-  s += `<text x="${x(zhMax) - 6}" y="${padT + 27}" text-anchor="end" font-size="12" fill="var(--muted)">na 8 jaar (IP 47) geen periodieken meer</text>`;
+  s += `<text x="${x(zhMax) - 6}" y="${padT + 12}" text-anchor="end" font-size="${fs}" fill="var(--accent)" font-weight="600">${narrow ? "Einde schaal algemeen" : "Einde schaal algemeen ziekenhuis"}</text>`;
+  s += `<text x="${x(zhMax) - 6}" y="${padT + 12 + fs + 3}" text-anchor="end" font-size="${fs}" fill="var(--muted)">${narrow ? "na 8 jaar (IP 47)" : "na 8 jaar (IP 47) geen periodieken meer"}</text>`;
   s += `<path d="${path(zh.slice(0, zhMax + 1))}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>`;
   s += `<path d="M${x(zhMax)},${y(zh[zhMax])} ${zh.slice(zhMax).map((v, j) => `L${x(zhMax + j)},${y(v)}`).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="5 5"/>`;
   years.forEach((yr, i) => {
     s += `<circle class="pt" data-i="${i}" cx="${x(i)}" cy="${y(umc[i])}" r="3.5" fill="var(--surface)" stroke="var(--umc)" stroke-width="2"/>`;
     s += `<circle class="pt" data-i="${i}" cx="${x(i)}" cy="${y(zh[i])}" r="3.5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>`;
-    s += `<text class="xl" data-i="${i}" x="${x(i)}" y="${H - padB + 18}" text-anchor="middle" font-size="12" fill="var(--muted)">${yr}</text>`;
+    s += `<text class="xl" data-i="${i}" x="${x(i)}" y="${H - padB + 18}" text-anchor="middle" font-size="${fs}" fill="var(--muted)">${yr}</text>`;
   });
-  s += `<text x="${(padL + W - padR) / 2}" y="${H - 4}" text-anchor="middle" font-size="12" fill="var(--muted)">Ervaringsjaren</text>`;
+  s += `<text x="${(padL + W - padR) / 2}" y="${H - 4}" text-anchor="middle" font-size="${fs}" fill="var(--muted)">Ervaringsjaren</text>`;
   const colW = (W - padL - padR) / (years.length - 1);
   years.forEach((yr, i) => {
     s += `<rect class="hit" data-i="${i}" x="${x(i) - colW / 2}" y="${padT}" width="${colW}" height="${H - padT - padB + 24}" fill="transparent" style="cursor:pointer"/>`;
@@ -751,6 +820,50 @@ $("form").addEventListener("input", e => {
   render();
 });
 $("form").addEventListener("submit", e => e.preventDefault());
+// uitleg bij vaktermen
+const TIPS = {"peildatum": "De datum waarvan de salaristabel wordt gebruikt. Per 1 mei 2027 stijgen de umc-salarissen met 3,5%. Voor de Cao Ziekenhuizen wordt nog onderhandeld over een nieuwe cao vanaf 1 februari 2027; tot er een akkoord is, blijft de tabel van 1 augustus 2026 gelden.", "trede": "Je trede bepaalt je salaris binnen de schaal. In een algemeen ziekenhuis heet dat een IP-nummer, in een academisch ziekenhuis een salarisnummer. Je gaat elk jaar één trede omhoog, en relevante werkervaring vóór je opleiding telt per volledig jaar mee.", "dienstverband": "Het percentage van een voltijd aios-contract: 38 uur in een algemeen ziekenhuis, 46 uur in een academisch ziekenhuis. In een algemeen ziekenhuis mag je werkweek daarnaast oplopen tot gemiddeld 48 uur voor opleidingsactiviteiten (de normatieve werkweek), zonder extra betaling.", "diensten": "Aanwezigheidsdienst: je bent in het ziekenhuis en je uren tellen als werktijd met ORT. Bereikbaarheidsdienst: je bent thuis oproepbaar; je krijgt een vaste vergoeding per dienst plus, afhankelijk van de cao, een toeslag over de uren die je werkt.", "ort": "Onregelmatigheidstoeslag (ORT): een percentage van je uurloon voor uren die je volgens rooster werkt in de avond, nacht of het weekend. Het percentage hangt af van het tijdvak en de cao.", "bereik": "De vaste vergoeding die je krijgt voor het bereikbaar zijn, ook als je niet wordt opgeroepen. Algemeen ziekenhuis: een bedrag per dienst van 12 uur. Academisch ziekenhuis: een bedrag per uur.", "gewerkt": "De uren die je tijdens een bereikbaarheidsdienst daadwerkelijk werkt, bijvoorbeeld omdat je wordt opgeroepen. Over deze uren kan een toeslag gelden; daarnaast krijg je de tijd terug of uitbetaald.", "vakantiegeld": "Een jaarlijkse uitkering in mei: 8,33% van je salaris in een algemeen ziekenhuis, 8% van je loon (inclusief ORT en dienstvergoedingen) in een academisch ziekenhuis.", "eju": "De eindejaarsuitkering of dertiende maand: 8,33% van je jaarsalaris in een algemeen ziekenhuis (december), 8,3% in een academisch ziekenhuis (november).", "franchise": "Pensioengevend inkomen is het deel van je inkomen dat meetelt voor je pensioen: salaris, vakantiegeld, eindejaarsuitkering en ORT. De franchise is het deel waarover je geen pensioen opbouwt, omdat de AOW dat deel dekt. Over het verschil betaal je premie.", "werkgever": "Het deel van de pensioenpremie dat je werkgever betaalt, bovenop je loon. Je ziet het niet op je loonstrook, maar het telt wel mee voor je pensioen.", "aop": "AOP is het arbeidsongeschiktheidspensioen van pensioenfonds ABP: een kleine extra premie (0,8%, waarvan jij 0,24%) die je inkomen aanvult als je arbeidsongeschikt raakt.", "napremie": "Je bruto jaarinkomen min je eigen pensioenpremie. Ongeveer het bedrag waarover loonheffing wordt berekend; je netto inkomen is lager.", "totaal": "Je bruto jaarinkomen plus het pensioen dat je werkgever voor je afdraagt. Dit laat zien wat je werkgever in totaal aan je besteedt.", "peruur": "De totale beloning gedeeld door je betaalde contracturen. In een algemeen ziekenhuis werk je daarnaast mogelijk tot 10 onbetaalde opleidingsuren per week; die zitten hier niet in."};
+const tipbox = $("tipbox");
+let tipFor = null;
+function showTip(btn) {
+  const t = TIPS[btn.dataset.tip]; if (!t) return;
+  tipbox.textContent = t; tipbox.hidden = false; tipFor = btn;
+  document.querySelectorAll(".tip[aria-expanded=true]").forEach(b => b.setAttribute("aria-expanded", "false"));
+  btn.setAttribute("aria-expanded", "true");
+  const r = btn.getBoundingClientRect(), bw = tipbox.offsetWidth, bh = tipbox.offsetHeight;
+  let left = Math.min(Math.max(12, r.left + r.width / 2 - bw / 2), window.innerWidth - bw - 12);
+  let top = r.top - bh - 8; if (top < 8) top = r.bottom + 8;
+  tipbox.style.left = left + "px"; tipbox.style.top = top + "px";
+}
+function hideTip() { tipbox.hidden = true; if (tipFor) tipFor.setAttribute("aria-expanded", "false"); tipFor = null; }
+document.addEventListener("pointerover", e => { const b = e.target.closest(".tip"); if (b && e.pointerType === "mouse") showTip(b); });
+document.addEventListener("pointerout", e => { const b = e.target.closest(".tip"); if (b && e.pointerType === "mouse") hideTip(); });
+document.addEventListener("focusin", e => { const b = e.target.closest(".tip"); let kb = false; try { kb = b && b.matches(":focus-visible"); } catch (x) {} if (kb) showTip(b); });
+document.addEventListener("focusout", e => { if (e.target.closest(".tip")) hideTip(); });
+document.addEventListener("click", e => {
+  const b = e.target.closest(".tip");
+  if (b) { e.preventDefault(); e.stopPropagation(); if (tipFor === b && !tipbox.hidden) hideTip(); else showTip(b); return; }
+  hideTip();
+}, true);
+window.addEventListener("scroll", hideTip, { passive: true });
+document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); });
+
+// plus- en minknoppen ervaringsjaren
+document.querySelectorAll(".step").forEach(b => b.addEventListener("click", () => {
+  const el = $(b.dataset.target || "jaren");
+  el.value = Math.min(+el.max, Math.max(+el.min, parseInt(el.value, 10) + parseInt(b.dataset.step, 10))); render();
+}));
+
+// samenvattingsbalk op de telefoon: alleen als de grote uitkomst niet in beeld is
+let heroInView = false;
+function updateBar() { $("mbar").hidden = !document.querySelector("input[name=cao]:checked") || heroInView; }
+try {
+  new IntersectionObserver(es => { heroInView = es[0].isIntersecting; updateBar(); }).observe(document.querySelector(".hero"));
+} catch (e) {}
+
+// grafiek opnieuw tekenen bij een andere schermbreedte
+let rzT; window.addEventListener("resize", () => { clearTimeout(rzT); rzT = setTimeout(render, 150); });
+
+["p-zh-wn", "p-zh-fr", "p-abp-wn", "p-abp-fr"].forEach(id => $(id).addEventListener("input", render));
 render();
 </script>
 
