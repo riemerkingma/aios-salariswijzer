@@ -285,7 +285,6 @@ summary { cursor: pointer; font-weight: 600; }
           </div>
           <p class="label" style="margin-top:16px">Waarvan gewerkt, per tijdvak <button type="button" class="tip" data-tip="gewerkt" aria-label="Uitleg">?</button></p>
           <div class="ort" id="bw"></div>
-          <label class="check" for="zh-werk" id="zh-werk-row"><input type="checkbox" id="zh-werk"> <span>Algemeen ziekenhuis: mijn ziekenhuis betaalt ook binnen de 48-urige werkweek een toeslag over gewerkte uren tijdens diensten</span></label>
           <label class="check" for="dw-geld" id="dw-geld-row"><input type="checkbox" id="dw-geld"> <span>Gewerkte uren laten uitbetalen in plaats van compenseren in vrije tijd</span></label>
           <p class="hint" id="dienst-hint"></p>
         </div>
@@ -367,7 +366,7 @@ summary { cursor: pointer; font-weight: 600; }
           <p><b>Algemeen ziekenhuis (Cao Ziekenhuizen 2025-2027).</b> Salaristabel aios per 1 augustus 2026, IP 32 tot 47. De tabel is gebaseerd op 36 uur; aios werken 38 uur, dus het salaris is tabelbedrag × 38/36. De normatieve werkweek mag oplopen tot gemiddeld 48 uur (38 + 10) voor opleidingsactiviteiten die in het werk zijn verweven; die uren worden niet apart betaald, pas uren boven gemiddeld 48 per week gelden als overwerk (art. 6.18 en 8.7). ORT wordt berekend over het uurloon (1/156 van het 36-uurssalaris), met een maximum op het uurloon van IP 36. Vakantiebijslag en eindejaarsuitkering zijn elk 8,33% van het salaris. Pensioen bij pensioenfonds PFZW (Pensioenfonds Zorg en Welzijn): premie 25,9% over (pensioengevend inkomen − franchise), volgens de cao voor 50% voor rekening van de werknemer.</p>
           <p><b>Academisch ziekenhuis (Cao UMC 2026-2027).</b> Schaal 11a per 1 juli 2026, salarisnummer 0 tot 10, voor een volledige arbeidsduur van 2392 uur per jaar (46 uur per week). ORT is 47% (doordeweeks 20.00–07.00 en zaterdag) of 72% (zon- en feestdagen) over het uurloon (1/199 van het maandsalaris), met als maximum het uurloon van schaal 10, nummer 12. Vakantie-uitkering is 8% van het loon inclusief ORT en dienstvergoedingen; eindejaarsuitkering 8,3% van het salaris. Pensioen bij pensioenfonds ABP (Algemeen Burgerlijk Pensioenfonds): OP/NP 27,1% (eigen deel 8,13%) boven € 19.200 en AOP 0,8% (eigen deel 0,24%) boven € 29.700.</p>
           <p><b>Pensioengevend inkomen</b> = 12 × salaris + vakantiegeld + eindejaarsuitkering + ORT, gemaximeerd op € 137.800. Bij deeltijd gaan franchise en maximum naar rato. Je eigen premie gaat van je brutoloon af vóór de loonheffing.</p>
-          <p><b>Diensten.</b> Een aanwezigheidsdienst rekenen we als werktijd met ORT. Een bereikbaarheidsdienst geeft een vaste vergoeding plus een toeslag over de gewerkte uren (art. 10.5 en 10.8 Cao Ziekenhuizen; art. 4.7.4.1 en 4.7.4.2 Cao UMC). Vergoedingen voor bereikbaarheid en gewerkte uren tellen we niet mee voor pensioen. In het academisch ziekenhuis tellen ze wel mee voor de vakantie-uitkering (8% van het loon); in het algemeen ziekenhuis niet (vakantiebijslag over het salaris).</p>
+          <p><b>Diensten.</b> Een aanwezigheidsdienst rekenen we als werktijd met ORT. Een bereikbaarheidsdienst geeft een vaste vergoeding plus een toeslag over de gewerkte uren (art. 10.5 en 10.8 Cao Ziekenhuizen; art. 4.7.4.1 en 4.7.4.2 Cao UMC). De toeslag over gewerkte uren komt bovenop de vaste vergoeding voor de dienst. Vergoedingen voor bereikbaarheid en gewerkte uren tellen we niet mee voor pensioen. In het academisch ziekenhuis tellen ze wel mee voor de vakantie-uitkering (8% van het loon); in het algemeen ziekenhuis niet (vakantiebijslag over het salaris).</p>
           <p><b>Niet meegenomen:</b> overwerk, reiskosten, de umc-verhoging van 3,5% per 1 mei 2027 en een nieuwe Cao Ziekenhuizen na januari 2027. Je werkelijke inschaling (meetellende ervaring) bepaalt je werkgever.</p>
           <ul>
             <li><a href="https://cao-ziekenhuizen.nl/sites/default/files/2025-04/Salarisschalen%20AIOS%202025-2027.pdf" target="_blank" rel="noopener">Salarisschalen aios Cao Ziekenhuizen 2025-2027</a></li>
@@ -473,8 +472,16 @@ const tot = document.createElement("div");
 tot.className = "ort-total";
 tot.innerHTML = `<span>Totaal ORT-uren per maand</span><span class="num" id="ort-tot">0</span>`;
 ortBox.appendChild(tot);
+// tijdvakken voor gewerkte uren tijdens bereikbaarheid (Ziekenhuizen art. 10.8 lid 2 splitst zaterdag om 18.00 uur)
+const BW_CATS = [
+  { key: "avond", label: "Doordeweeks avond (20–22) en 06–07" },
+  { key: "nacht", label: "Doordeweeks nacht (22–06)" },
+  { key: "za1",   label: "Zaterdag tot 18.00" },
+  { key: "za2",   label: "Zaterdag vanaf 18.00" },
+  { key: "zon",   label: "Zon- en feestdagen" }
+];
 const bwBox = $("bw");
-ORT_CATS.forEach(c => {
+BW_CATS.forEach(c => {
   const row = document.createElement("div");
   row.className = "ort-row";
   row.innerHTML = `<label for="bw-${c.key}">${c.label}</label><span class="pct" id="bpct-${c.key}"></span>
@@ -498,19 +505,19 @@ function readHours() {
 // Ziekenhuizen art. 10.5 en 10.8 lid 2; umc art. 4.7.4.1 en 4.7.4.2
 const DIENST = {
   zh:  { per: 12, b: { mv: 87.5, za: 137.5, zo: 137.5 },
-         w: { avond: .25, nacht: .50, zadag: .75, zanacht: .75, zon: 1.00 },
+         w: { avond: .25, nacht: .50, za1: .75, za2: 1.00, zon: 1.00 },
          uur: (s, cap) => s / 156 },
   umc: { per: 1,  b: { mv: 5, za: 10, zo: 10 },
-         w: { avond: .47, nacht: .47, zadag: .47, zanacht: .47, zon: .72 },
+         w: { avond: .47, nacht: .47, za1: .47, za2: .47, zon: .72 },
          uur: (s, cap) => Math.min(s / 199, cap / 156) }
 };
 function readDienst() {
   const v = id => Math.max(0, parseFloat($(id).value) || 0);
   const type = document.querySelector("input[name=dtype]:checked").value;
   const on = type === "bereik";
-  const d = { type, u: {}, w: {}, geld: $("dw-geld").checked, zhWerk: $("zh-werk").checked };
+  const d = { type, u: {}, w: {}, geld: $("dw-geld").checked };
   ["mv", "za", "zo"].forEach(k => { d.u[k] = on ? v("d-" + k) : 0; });
-  ORT_CATS.forEach(c => { d.w[c.key] = on ? v("bw-" + c.key) : 0; });
+  BW_CATS.forEach(c => { d.w[c.key] = on ? v("bw-" + c.key) : 0; });
   return d;
 }
 function peil() { const el = document.querySelector("input[name=peil]:checked"); return el ? el.value : "nu"; }
@@ -534,10 +541,8 @@ function calc(caoKey, jaren, dt, hours) {
   let bereik = 0, aanw = 0, werk = 0;
   ["mv", "za", "zo"].forEach(k => { bereik += d.u[k] / D.per * D.b[k]; });
   const uurD = D.uur(tabelBedrag, cap);
-  // algemeen ziekenhuis: voor aios tellen gewerkte uren mee voor de normatieve werkweek (art. 6.18 lid 3);
-  // een vergoeding geldt pas boven gemiddeld 48 uur (art. 8.7, 10.8 lid 5), tenzij het ziekenhuis ruimer vergoedt
-  const werkTelt = caoKey === "umc" || d.zhWerk;
-  if (werkTelt) ORT_CATS.forEach(c => { werk += d.w[c.key] * uurD * (D.w[c.key] + (d.geld ? 1 : 0)); });
+  // algemeen ziekenhuis: toeslag art. 10.8 lid 1-4 (ruime lezing: aios onder IP 48 houden recht, ook binnen 48 uur)
+  BW_CATS.forEach(c => { werk += d.w[c.key] * uurD * (D.w[c.key] + (d.geld ? 1 : 0)); });
   const dienstJaar = (bereik + aanw + werk) * 12;
   const vgPg = c.vg * (salJaar + (c.vgOverOrt ? ortJaar : 0));        // vakantiegeld zonder dienstvergoedingen
   const vg = vgPg + (c.vgOverOrt ? c.vg * dienstJaar : 0);            // umc: 8% over het hele loon (art. 1.1, 4.5)
@@ -584,7 +589,8 @@ function render() {
     const dtype0 = readDienst().type;
     $("ort-detail").hidden = dtype0 !== "aanw";
     $("dienst-detail").hidden = dtype0 !== "bereik";
-    ORT_CATS.forEach(k => { $("pct-" + k.key).textContent = "\u2013"; $("bpct-" + k.key).textContent = "\u2013"; });
+    ORT_CATS.forEach(k => { $("pct-" + k.key).textContent = "\u2013"; });
+    BW_CATS.forEach(k => { $("bpct-" + k.key).textContent = "\u2013"; });
     $("ort-tot").textContent = ORT_CATS.reduce((t, k) => t + readHours()[k.key], 0) + " uur";
     $("bw-tot").textContent = Object.values(readDienst().w).reduce((a, b) => a + b, 0) + " uur";
     $("type-hint").textContent = "";
@@ -622,16 +628,14 @@ function render() {
   const dtype = readDienst().type;
   $("ort-detail").hidden = dtype !== "aanw";
   $("dienst-detail").hidden = dtype !== "bereik";
-  ORT_CATS.forEach(k => { $("bpct-" + k.key).textContent = Math.round(DIENST[caoKey].w[k.key] * 100) + "%"; });
+  BW_CATS.forEach(k => { $("bpct-" + k.key).textContent = Math.round(DIENST[caoKey].w[k.key] * 100) + "%"; });
   $("type-hint").textContent = {
     geen: "Je werkt alleen op gewone dagtijden; er komt geen toeslag bij.",
     aanw: "Je bent in het ziekenhuis en je dienst telt als werktijd. Over de uren op onregelmatige tijden krijg je onregelmatigheidstoeslag (ORT).",
     bereik: "Je bent thuis oproepbaar. Je krijgt een vaste vergoeding voor de dienst en een toeslag over de uren die je werkt."
   }[dtype];
-  $("zh-werk-row").hidden = caoKey !== "zh";
-  $("dw-geld-row").hidden = caoKey === "zh" && !$("zh-werk").checked;
   $("dienst-hint").innerHTML = caoKey === "zh"
-    ? "Algemeen ziekenhuis: € 87,50 (ma–vr) of € 137,50 (weekend) per 12 uur dienst, langere diensten naar rato; op feestdagen € 162,50. Volgens de cao tellen gewerkte uren tijdens diensten voor aios mee voor de normatieve werkweek van 38 + 10 uur; een toeslag krijg je pas over uren boven gemiddeld 48 per week (<a href=\"https://www.lad.nl/wp-content/uploads/Cao-Ziekenhuizen-2025-2027.pdf#page=62\" target=\"_blank\" rel=\"noopener\">art. 8.7</a> en <a href=\"https://www.lad.nl/wp-content/uploads/Cao-Ziekenhuizen-2025-2027.pdf#page=69\" target=\"_blank\" rel=\"noopener\">art. 10.8</a>). Vergoedt jouw ziekenhuis gewerkte uren ruimer, vink dat dan aan: dan rekent de app 25% (ma–vr 06–22), 50% (ma–vr 22–06), 75% (zaterdag tot 18.00) of 100% (zaterdag vanaf 18.00, zon- en feestdagen)."
+    ? "Algemeen ziekenhuis: € 87,50 (ma–vr) of € 137,50 (weekend) per 12 uur dienst, langere diensten naar rato; op feestdagen € 162,50. Gewerkte uren: je krijgt de tijd terug (of uitbetaald) plus 25% (ma–vr 06–22), 50% (ma–vr 22–06), 75% (zaterdag tot 18.00) of 100% (zaterdag vanaf 18.00, zon- en feestdagen) toeslag (<a href=\"https://www.lad.nl/wp-content/uploads/Cao-Ziekenhuizen-2025-2027.pdf#page=69\" target=\"_blank\" rel=\"noopener\">art. 10.8</a>)."
     : "Academisch ziekenhuis: € 5 (ma–vr) of € 10 (weekend en feestdagen) per uur dienst. Gewerkte uren: 47% toeslag (ma–vr 20.00–07.00 en zaterdag) of 72% (zon- en feestdagen).";
 
   $("hero-label").textContent = `Bruto per jaar · ${c.kort}, ${jaren} ${jaren === 1 ? "ervaringsjaar" : "ervaringsjaren"}`;
@@ -655,9 +659,9 @@ function render() {
     <tr><th>Salaris<span class="meta">${salMeta}</span></th><td>${eur(r.sal)}</td><td>${eur(r.salJaar)}</td></tr>
     ${dt_ === "aanw" ? `<tr><th>ORT over aanwezigheidsdiensten <button type="button" class="tip" data-tip="ort" aria-label="Uitleg">?</button><span class="meta">${totUren} uur/mnd, uurloon ORT ${eur(r.uur, 2)}${caoKey === "zh" && r.tabelBedrag > 5007 ? " (maximum IP 36)" : ""}</span></th><td>${eur(r.ortMaand)}</td><td>${eur(r.ortJaar)}</td></tr>` : ""}
     ${dt_ === "bereik" ? `<tr><th>Bereikbaarheidsdiensten<span class="meta">${caoKey === "zh" ? "€ 87,50 (ma–vr) of € 137,50 (weekend) per 12 uur" : "€ 5 (ma–vr) of € 10 (weekend) per uur"}</span></th><td>${eur(r.bereik)}</td><td>${eur(r.bereik * 12)}</td></tr>` : ""}
-    ${dt_ === "bereik" ? `<tr><th>Toeslag gewerkte uren tijdens dienst<span class="meta">${caoKey === "zh" && !readDienst().zhWerk ? "telt mee voor je werkweek van 38 + 10 uur; geen toeslag binnen 48 uur" : `${Object.values(readDienst().w).reduce((a, b) => a + b, 0)} uur/mnd, uurloon ${eur(r.uurD, 2)}${readDienst().geld ? ", inclusief uitbetaling van de uren" : "; uren zelf terug in vrije tijd"}`}</span></th><td>${eur(r.werk)}</td><td>${eur(r.werk * 12)}</td></tr>` : ""}
-    <tr><th>Vakantiegeld <button type="button" class="tip" data-tip="vakantiegeld" aria-label="Uitleg">?</button><span class="meta">${pct(c.vg)} van salaris${c.vgOverOrt ? " + ORT en dienstvergoedingen" : ""}, in mei</span></th><td>–</td><td>${eur(r.vg)}</td></tr>
-    <tr><th>Eindejaarsuitkering <button type="button" class="tip" data-tip="eju" aria-label="Uitleg">?</button><span class="meta">${pct(c.eju)} van salaris, in ${caoKey === "zh" ? "december" : "november"}</span></th><td>–</td><td>${eur(r.eju)}</td></tr>
+    ${dt_ === "bereik" ? `<tr><th>Toeslag gewerkte uren tijdens dienst<span class="meta">${Object.values(readDienst().w).reduce((a, b) => a + b, 0)} uur/mnd, uurloon ${eur(r.uurD, 2)}${readDienst().geld ? ", inclusief uitbetaling van de uren" : "; uren zelf terug in vrije tijd"}</span></th><td>${eur(r.werk)}</td><td>${eur(r.werk * 12)}</td></tr>` : ""}
+    <tr><th>Vakantiegeld <button type="button" class="tip" data-tip="vakantiegeld" aria-label="Uitleg">?</button><span class="meta">${pct(c.vg)} van salaris${c.vgOverOrt ? " + ORT en dienstvergoedingen" : ""}, uitgekeerd in mei</span></th><td>–</td><td>${eur(r.vg)}</td></tr>
+    <tr><th>Eindejaarsuitkering <button type="button" class="tip" data-tip="eju" aria-label="Uitleg">?</button><span class="meta">${pct(c.eju)} van salaris, uitgekeerd in ${caoKey === "zh" ? "december" : "november"}</span></th><td>–</td><td>${eur(r.eju)}</td></tr>
     <tr class="total"><th>Bruto jaarinkomen</th><td>${eur(r.bruto / 12)}</td><td>${eur(r.bruto)}</td></tr>
     <tr><th style="padding-top:18px"><b>Pensioen bij pensioenfonds ${c.fonds}</b> ${c.fonds === "ABP" ? '<button type="button" class="tip" data-tip="aop" aria-label="Uitleg">?</button>' : ""}<span class="meta">${r.detail}</span></th><td></td><td></td></tr>
     <tr class="neg"><th>Pensioengevend inkomen − franchise <button type="button" class="tip" data-tip="franchise" aria-label="Uitleg">?</button><span class="meta">${eur(r.pg)} − ${eur(r.franchise)}</span></th><td></td><td>${eur(r.grondslag)}</td></tr>
@@ -781,15 +785,15 @@ function showYear(i, hover) {
 // interactie
 // voorbeeldpatronen bereikbaarheid: u = uren dienst (ma-vr, za, zo/fd), w = gewerkte uren per tijdvak
 const BPRESETS = {
-  geen:      { u: { mv: 0,  za: 0,  zo: 0 },  w: { avond: 0, nacht: 0,  zadag: 0, zanacht: 0, zon: 0 } },
-  licht:     { u: { mv: 16, za: 0,  zo: 0 },  w: { avond: 3, nacht: 5, zadag: 0, zanacht: 0, zon: 0 } },
-  gemiddeld: { u: { mv: 32, za: 0,  zo: 24 }, w: { avond: 6, nacht: 9, zadag: 0, zanacht: 0, zon: 10 } },
-  veel:      { u: { mv: 48, za: 24, zo: 24 }, w: { avond: 8, nacht: 14, zadag: 8, zanacht: 4, zon: 11 } }
+  geen:      { u: { mv: 0,  za: 0,  zo: 0 },  w: { avond: 0, nacht: 0,  za1: 0, za2: 0, zon: 0 } },
+  licht:     { u: { mv: 16, za: 0,  zo: 0 },  w: { avond: 3, nacht: 5,  za1: 0, za2: 0, zon: 0 } },
+  gemiddeld: { u: { mv: 32, za: 0,  zo: 24 }, w: { avond: 6, nacht: 9,  za1: 0, za2: 0, zon: 10 } },
+  veel:      { u: { mv: 48, za: 24, zo: 24 }, w: { avond: 8, nacht: 14, za1: 7, za2: 5, zon: 11 } }
 };
 function setBPreset(name, silent) {
   const p = BPRESETS[name];
   ["mv", "za", "zo"].forEach(k => { $("d-" + k).value = p.u[k]; });
-  ORT_CATS.forEach(c => { $("bw-" + c.key).value = p.w[c.key]; });
+  BW_CATS.forEach(c => { $("bw-" + c.key).value = p.w[c.key]; });
   document.querySelectorAll("[data-bpreset]").forEach(b => b.setAttribute("aria-pressed", b.dataset.bpreset === name ? "true" : "false"));
   if (!silent) { $("dt-bereik").checked = true; render(); }
 }
